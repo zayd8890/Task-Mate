@@ -1,3 +1,4 @@
+// ============== TASK MANAGER CORE ==============
 class TaskManager {
   constructor() {
     this.tasks = [];
@@ -10,10 +11,9 @@ class TaskManager {
   async init() {
     await this.loadTasks();
     this.setupAlarms();
-    this.setupIcon(); // Added icon initialization
+    this.setupIcon();
   }
-// TASK MATE TEST
-// TEST test
+
   async loadTasks() {
     return new Promise((resolve) => {
       chrome.storage.sync.get(['tasks'], (result) => {
@@ -22,7 +22,7 @@ class TaskManager {
       });
     });
   }
-// GGG MATE 
+
   async saveTasks() {
     return new Promise((resolve) => {
       chrome.storage.sync.set({ tasks: this.tasks }, () => {
@@ -33,20 +33,12 @@ class TaskManager {
   }
 
   sendUpdate() {
-    chrome.runtime.sendMessage({
-      type: 'tasks_updated',
-      tasks: this.tasks
-    });
+    chrome.runtime.sendMessage({ type: 'tasks_updated', tasks: this.tasks });
   }
 
-  // Added dynamic icon setup
   setupIcon() {
     chrome.action.setIcon({
-      path: {
-        "16": "icons/icon48.png",
-        "32": "icons/icon48.png",
-        "48": "icons/icon48.png"
-      }
+      path: { "16": "icons/icon48.png", "32": "icons/icon48.png", "48": "icons/icon48.png" }
     });
   }
 
@@ -63,64 +55,37 @@ class TaskManager {
 
   async prioritizeTasks() {
     try {
-      const token = await this.getAuthToken();
-      if (!token) throw new Error('No auth token');
-      
       const response = await fetch(this.API_ENDPOINTS.gemini, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{
             parts: [{
               text: `Prioritize tasks as JSON:\n${
                 this.tasks.map(t => `${t.id}||${t.text}`).join('\n')
-              }\nFormat: [{id, text, priority: "high/medium/low"}]`
+              }\nRespond ONLY with: [{"id":"1","text":"task","priority":"high"}]`
             }]
           }]
         })
       });
-
-      if (!response.ok) throw new Error(`API error: ${response.status}`);
       
+      if (!response.ok) throw new Error(`API error: ${response.status}`);
       const data = await response.json();
       const resultText = data.candidates[0].content.parts[0].text;
-      const prioritized = this.safeParse(resultText);
-      
+      const prioritized = JSON.parse(resultText);
       this.tasks = prioritized;
       await this.saveTasks();
     } catch (error) {
       console.error('Prioritization failed:', error);
-      this.fallbackPrioritization();
+      this.tasks.forEach(t => t.priority = t.text.includes('!') ? 'high' : 'medium');
+      this.saveTasks();
     }
-  }
-
-  safeParse(jsonString) {
-    try {
-      return JSON.parse(jsonString);
-    } catch (e) {
-      console.warn('Failed to parse AI response, using fallback');
-      return this.tasks.map(t => ({
-        ...t,
-        priority: t.priority || 'medium'
-      }));
-    }
-  }
-
-  fallbackPrioritization() {
-    this.tasks.forEach(t => {
-      t.priority = t.text.includes('!') ? 'high' : 'medium';
-    });
-    this.saveTasks();
   }
 
   async scheduleTasks() {
     try {
       const token = await this.getAuthToken();
       if (!token) throw new Error('No calendar access');
-      
       for (const task of this.tasks.filter(t => !t.scheduled)) {
         await this.createCalendarEvent(task, token);
         task.scheduled = true;
@@ -138,16 +103,11 @@ class TaskManager {
       start: { dateTime: new Date().toISOString() },
       end: { dateTime: new Date(Date.now() + 3600000).toISOString() }
     };
-
     const response = await fetch(this.API_ENDPOINTS.calendar, {
       method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      },
+      headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
       body: JSON.stringify(event)
     });
-
     if (!response.ok) throw new Error(`Calendar API error: ${response.status}`);
     return response.json();
   }
@@ -167,56 +127,32 @@ class TaskManager {
 
   setupAlarms() {
     chrome.alarms.create('task-reminder', { periodInMinutes: 60 });
-    chrome.alarms.onAlarm.addListener(this.checkDueTasks.bind(this));
-  }
-
-  checkDueTasks() {
-    const now = new Date();
-    this.tasks.forEach(task => {
-      if (task.dueDate && new Date(task.dueDate) < now) {
-        this.sendNotification(task);
-      }
-    });
-  }
-
-  sendNotification(task) {
-    chrome.notifications.create(`task-${task.id}`, {
-      type: 'basic',
-      iconUrl: 'icons/icon48.png', // Using your 48px icon
-      title: 'Task Due',
-      message: task.text,
-      priority: 2
+    chrome.alarms.onAlarm.addListener(() => {
+      const now = new Date();
+      this.tasks.forEach(task => {
+        if (task.dueDate && new Date(task.dueDate) < now) {
+          chrome.notifications.create(`task-${task.id}`, {
+            type: 'basic',
+            iconUrl: 'icons/icon48.png',
+            title: 'Task Due',
+            message: task.text,
+            priority: 2
+          });
+        }
+      });
     });
   }
 }
 
-// Message handlers
-const messageHandlers = {
-  draft_email: async () => {
-    const token = await taskManager.getAuthToken();
-    // Gmail API implementation
-  },
-  
-  web_search: async ({ query }) => {
-    try {
-      const response = await fetch(
-        `https://www.googleapis.com/customsearch/v1?q=${encodeURIComponent(query)}&key=YOUR_API_KEY`
-      );
-      return await response.json();
-    } catch (error) {
-      console.error('Search failed:', error);
-    }
-  }
-};
-
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  const handler = messageHandlers[request.action];
-  if (handler) {
-    handler(request).then(sendResponse);
-    return true; // Required for async response
-  }
-});
-
-// Initialize
-const taskManager = new TaskManager();
+// ============ INITIALIZATION ============
+const taskManager = new TaskManager(); 
 taskManager.init();
+window.taskManager = taskManager;
+
+// ============ MESSAGE HANDLER ============
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === 'addTask') taskManager.addTask(request.text).then(sendResponse);
+  if (request.action === 'prioritizeTasks') taskManager.prioritizeTasks().then(sendResponse);
+  if (request.action === 'scheduleTasks') taskManager.scheduleTasks().then(sendResponse);
+  return true;
+});

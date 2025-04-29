@@ -1,5 +1,3 @@
-import { TaskManager } from './background.js';
-
 // DOM Elements
 const elements = {
   taskInput: document.getElementById('task-input'),
@@ -10,24 +8,21 @@ const elements = {
   scheduleBtn: document.getElementById('schedule-btn'),
   emailBtn: document.getElementById('email-btn'),
   searchBtn: document.getElementById('search-btn'),
-  statusIndicator: document.createElement('div') // Added status indicator
+  statusIndicator: document.createElement('div')
 };
 
 class PopupUI {
   constructor() {
-    this.taskManager = new TaskManager();
-    this.setupUI();
+    this.taskManager = window.taskManager || new TaskManager();
+    this.setupUI().catch(console.error);
   }
 
   async setupUI() {
-    // Add status indicator to DOM
     elements.statusIndicator.className = 'status-indicator';
     document.body.appendChild(elements.statusIndicator);
-
-    await this.taskManager.init();
     this.setupEventListeners();
-    this.updateAuthStatus();
-    this.renderTasks();
+    await this.updateAuthStatus();
+    await this.renderTasks();
   }
 
   setupEventListeners() {
@@ -40,14 +35,14 @@ class PopupUI {
     // AI actions
     elements.aiPrioritizeBtn.addEventListener('click', async () => {
       this.showStatus('Prioritizing tasks...');
-      await this.taskManager.prioritizeTasks();
+      await chrome.runtime.sendMessage({ action: 'prioritizeTasks' });
       this.showStatus('Tasks prioritized!', 2000);
     });
 
     // Quick actions
     elements.scheduleBtn.addEventListener('click', async () => {
       this.showStatus('Scheduling to calendar...');
-      await this.taskManager.scheduleTasks();
+      await chrome.runtime.sendMessage({ action: 'scheduleTasks' });
       this.showStatus('Tasks scheduled!', 2000);
     });
 
@@ -58,28 +53,21 @@ class PopupUI {
 
     elements.searchBtn.addEventListener('click', () => {
       const query = elements.taskInput.value.trim();
-      if (query) {
-        this.showStatus('Searching...');
-        chrome.runtime.sendMessage({ action: 'web_search', query });
-      }
+      if (query) chrome.runtime.sendMessage({ action: 'web_search', query });
     });
 
     // Auth button
     elements.authBtn.addEventListener('click', () => this.handleAuth());
-
-    // Task updates listener
-    chrome.runtime.onMessage.addListener((message) => {
-      if (message.type === 'tasks_updated') {
-        this.renderTasks(message.tasks);
-      }
-    });
   }
 
   async handleAddTask() {
     const text = elements.taskInput.value.trim();
     if (text) {
       this.showStatus('Adding task...');
-      await this.taskManager.addTask(text);
+      await chrome.runtime.sendMessage({ 
+        action: 'addTask', 
+        text 
+      });
       elements.taskInput.value = '';
       this.showStatus('Task added!', 1500);
     }
@@ -88,24 +76,26 @@ class PopupUI {
   async handleAuth() {
     this.showStatus('Authenticating...');
     const token = await new Promise(resolve => {
-      chrome.identity.getAuthToken({ interactive: true }, (token) => {
-        resolve(token);
-      });
+      chrome.identity.getAuthToken({ interactive: true }, resolve);
     });
     this.updateAuthStatus(!!token);
     this.showStatus(token ? 'Signed in!' : 'Sign-in failed', 2000);
   }
 
-  updateAuthStatus(authenticated) {
+  async updateAuthStatus(forceAuthenticated) {
+    const authenticated = forceAuthenticated ?? await new Promise(resolve => {
+      chrome.identity.getAuthToken({ interactive: false }, (token) => {
+        resolve(!!token);
+      });
+    });
     elements.authBtn.textContent = authenticated ? 'Signed In' : 'Sign In';
     elements.authBtn.className = authenticated ? 'auth-button signed-in' : 'auth-button';
   }
 
-  renderTasks(tasks) {
-    if (!tasks) tasks = this.taskManager.getTasks();
+  async renderTasks() {
+    const { tasks } = await chrome.storage.sync.get('tasks');
     elements.tasksContainer.innerHTML = '';
-
-    tasks.forEach(task => {
+    (tasks || []).forEach(task => {
       const taskEl = document.createElement('div');
       taskEl.className = `task-item priority-${task.priority || 'medium'}`;
       taskEl.innerHTML = `
@@ -119,7 +109,6 @@ class PopupUI {
   showStatus(message, duration = 0) {
     elements.statusIndicator.textContent = message;
     elements.statusIndicator.style.display = 'block';
-    
     if (duration > 0) {
       setTimeout(() => {
         elements.statusIndicator.style.display = 'none';
@@ -128,7 +117,7 @@ class PopupUI {
   }
 }
 
-// Initialize when DOM loads
+// Initialize
 document.addEventListener('DOMContentLoaded', () => {
   new PopupUI();
 });
