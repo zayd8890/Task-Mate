@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TaskMate</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <header class="app-header">
+      <div class="header-content">
+        <img src="icons/icon48.png" alt="TaskMate Logo" class="logo" width="32" height="32">
+        <h1>TaskMate</h1>
+      </div>
+      <button id="auth-btn" class="auth-button">
+        <span class="auth-text">Sign In</span>
+        <span class="auth-status"></span>
+      </button>
+    </header>
+
+    <div class="input-section">
+      <textarea id="task-input" 
+                placeholder="Enter task (e.g. 'Finish report by Friday #high')" 
+                aria-label="Task input"></textarea>
+      <div class="button-group">
+        <button id="add-task-btn" class="primary-btn" aria-label="Add task">
+          <span class="btn-icon">+</span> Add Task
+        </button>
+        <button id="ai-prioritize-btn" class="secondary-btn" aria-label="AI prioritize">
+          <span class="btn-icon">⚡</span> Prioritize
+        </button>
+      </div>
+    </div>
+
+    <div class="task-list-container">
+      <div class="task-list-header">
+        <h2>Your Tasks</h2>
+        <span id="task-count" class="badge">0</span>
+      </div>
+      <div id="tasks-container" class="task-list" aria-live="polite"></div>
+    </div>
+
+    <div class="quick-actions">
+      <button id="schedule-btn" class="action-btn" aria-label="Schedule tasks">
+        <span class="action-icon">📅</span>
+        <span class="action-text">Schedule</span>
+      </button>
+      <button id="email-btn" class="action-btn" aria-label="Draft email">
+        <span class="action-icon">✉️</span>
+        <span class="action-text">Email</span>
+      </button>
+      <button id="search-btn" class="action-btn" aria-label="Web research">
+        <span class="action-icon">🔍</span>
+        <span class="action-text">Research</span>
+      </button>
+    </div>
+
+    <div id="status-indicator" class="status-indicator" aria-live="assertive"></div>
+  </div>
+
+  <script src="popup.js" type="module"></script>
+</body>
+</html>

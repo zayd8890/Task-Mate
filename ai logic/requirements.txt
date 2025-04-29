@@ -1,0 +1,9 @@
+numpy
+pandas
+scikit-learn
+spacy
+python-dateutil
+networkx
+matplotlib
+pytest
+pytest-cov
