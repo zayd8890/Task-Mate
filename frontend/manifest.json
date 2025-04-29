@@ -29,7 +29,7 @@
     "https://generativelanguage.googleapis.com/*"
   ],
   "oauth2": {
-    "client_id": "YOUR_CLIENT_ID.apps.googleusercontent.com",
+    "client_id": "922307377479-fd0o12g0t4fgle3sja41o12vnvnp66kd.apps.googleusercontent.com",
     "scopes": [
       "https://www.googleapis.com/auth/calendar",
       "https://www.googleapis.com/auth/gmail.send",
