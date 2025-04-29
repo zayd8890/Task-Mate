@@ -22,7 +22,7 @@ class TaskManager {
       });
     });
   }
-
+// GGG MATE 
   async saveTasks() {
     return new Promise((resolve) => {
       chrome.storage.sync.set({ tasks: this.tasks }, () => {
