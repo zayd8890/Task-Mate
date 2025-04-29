@@ -12,7 +12,8 @@ class TaskManager {
     this.setupAlarms();
     this.setupIcon(); // Added icon initialization
   }
-
+// TASK MATE TEST
+// TEST test
   async loadTasks() {
     return new Promise((resolve) => {
       chrome.storage.sync.get(['tasks'], (result) => {
