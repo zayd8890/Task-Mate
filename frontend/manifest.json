@@ -29,11 +29,15 @@
     "https://generativelanguage.googleapis.com/*"
   ],
   "oauth2": {
+<<<<<<< HEAD
     "client_id": "922307377479-fd0o12g0t4fgle3sja41o12vnvnp66kd.apps.googleusercontent.com",
+=======
+    "client_id": "95534463596-jsggmgskmo27si9rasl1j7cs33ta2r72.apps.googleusercontent.com",
+>>>>>>> 90a342066de628dbb0381737eeb36fb80c2d680e
     "scopes": [
-      "https://www.googleapis.com/auth/calendar",
-      "https://www.googleapis.com/auth/gmail.send",
-      "https://www.googleapis.com/auth/userinfo.email"
+    "https://www.googleapis.com/auth/calendar",
+    "https://www.googleapis.com/auth/gmail.compose",
+    "https://www.googleapis.com/auth/userinfo.email"
     ]
   },
   "background": {

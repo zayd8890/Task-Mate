@@ -11,8 +11,8 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 def setup_test_environment():
     """Setup test environment variables and configurations"""
     # Set environment variables for testing
-    os.environ["OPENAI_API_KEY"] = "test_api_key"
-    os.environ["SEARCH_API_KEY"] = "test_search_api_key"
+    os.environ["api_key"] = "96d964197f424eefbab7d578e590b335"
+    # os.environ["SEARCH_API_KEY"] = "test_search_api_key"
     
     # Create any necessary test directories
     os.makedirs("test_output", exist_ok=True)
