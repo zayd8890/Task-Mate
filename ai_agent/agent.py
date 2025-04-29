@@ -5,11 +5,14 @@ from typing import Dict, Callable, Any
 import os
 import toml
 from deepseek import ChatModel
+import toml
 
+config = toml.load('config.toml')
+DEEPSEEK_API = config['secrets']['DEEPSEEK_API']
 
 
 class Agent:
-    def __init__(self, tools: Dict[str, Callable],api_key):
+    def __init__(self, tools: Dict[str, Callable],api_key=DEEPSEEK_API):
         self.tools = tools
         self.conversation_history = []
         self.api_key = api_key
