@@ -91,7 +91,7 @@ class PopupUI {
     elements.authBtn.textContent = authenticated ? 'Signed In' : 'Sign In';
     elements.authBtn.className = authenticated ? 'auth-button signed-in' : 'auth-button';
   }
-
+// GET
   async renderTasks() {
     const { tasks } = await chrome.storage.sync.get('tasks');
     elements.tasksContainer.innerHTML = '';
